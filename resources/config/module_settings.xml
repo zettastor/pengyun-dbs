@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurations>
+    <project name="*">
+        <file name="log4j.properties">
+            <property name="log4j.rootLogger" value="WARN, FILE" />
+            <property name="log4j.appender.FILE.MaxFileSize" value="200MB"/>
+            <property name="log4j.appender.FILE.MaxBackupIndex" value="15"/>
+        </file>
+        <file name="network.properties">
+            <property name="control.flow.subnet" value="10.0.2.0/23" />
+            <property name="monitor.flow.subnet" value="10.0.2.0/23" />
+            <property name="enable.data.depart.from.control" value="true" />
+            <property name="data.flow.subnet" value="172.16.1.0/24" />
+            <property name="outward.flow.subnet" value="172.16.1.0/24" />
+        </file>
+        <file name="storage.properties">
+            <property name="page.size.byte" value="4096" />
+            <property name="segment.size.byte" value="1073741824" />
+            <property name="io.timeout.ms" value="60000" />
+        </file>
+    </project>
+
+    <project name="pengyun-coordinator">
+        <file name="coordinator.properties">
+            <property name="app.location" value="r=PY;d=PY;c=PY;h=PY" />
+            <property name="io.depth" value="128" />
+            <property name="enable.logger.tracer" value="false" />
+            <property name="trace.all.logs" value="false" />
+            <property name="debug.io.timeout.threshold.ms" value="1500" />
+            <property name="network.checksum.algorithm" value="DUMMY" />
+            <property name="ping.host.timeout.ms" value="500"/>
+            <property name="network.connection.detect.retry.maxtimes" value="3"/>
+            <property name="network.healthy.check.time" value="3"/>
+        </file>
+        <file name="jmxagent.properties">
+            <property name="jmx.agent.port" value="9100" />
+            <property name="jmx.agent.switcher" value="on" range="on;off" />
+        </file>
+     </project>
+
+   <project name="pengyun-drivercontainer">
+        <file name="drivercontainer.properties">
+            <property name="app.location" value="r=PY;d=PY;c=PY;h=PY" />
+            <property name="system.memory.force.reserved" value="2048M" />
+            <property name="iet.target.flag" value="false" />
+            <property name="iscsi.portal.type" value="IPV6"/>
+        </file>
+        <file name="jvm.properties">
+            <property name="initial.mem.pool.size" value="512m" />
+            <property name="max.mem.pool.size" value="1024m" />
+        </file>
+        <file name="coordinator-jvm.properties">
+            <property name="initial.mem.pool.size" value="1024m" />
+            <property name="min.mem.pool.size" value="1024m" />
+            <property name="max.mem.pool.size" value="1024m" />
+            <property name="max.direct.memory.size" value="1024m" />
+            <property name="netty.allocator.maxOrder" value="7" />
+        </file>
+        <file name="jmxagent.properties">
+            <property name="jmx.agent.port" value="9100" />
+            <property name="jmx.agent.switcher" value="on" range="on;off" />
+        </file>
+        <file name="lioCommandManager.properties">
+            <property name="default.saveConfig.file.path" value="/etc/target/saveconfig.json" />
+            <property name="default.liotarget.port" value="3260" />
+            <property name="bind.nbd.cmd" value="/opt/pyd/pyd-client %s %s %s %s" />
+            <property name="start.lio.service.command" value="/usr/sbin/service target start" />
+            <property name="stop.lio.service.command" value="/usr/sbin/service target stop" />
+            <property name="io.depth" value="128" />
+        </file>
+        <file name="liotarget.properties">
+            <property name="saveconfig.path" value="/etc/target/saveconfig.json" />
+            <property name="restore.command" value="/usr/bin/targetctl restore /etc/target/saveconfig.json" />
+        </file>
+    </project>
+
+    <project name="pengyun-datanode">
+        <file name="arbiter_info.properties">
+            <property name="app.location" value="r=PY;d=PY;c=PY;h=PY" />
+        </file>
+        <file name="datanode_info.properties">
+            <property name="app.location" value="r=PY;d=PY;c=PY;h=PY" />
+        </file>
+        <file name="datanode.properties">
+            <!-- when to request a new member for an incomplete membership (like PSI)-->
+            <property name="threshold.to.request.for.new.member.ms" value="1800000"/>
+            <!-- for how long we will keep segment unit status in Deleting -->
+            <property name="wait.time.ms.to.move.segment.to.deleted" value="300000"/>
+            <property name="threshold.to.remove.ejected.archive.ms" value="600000"/>
+            <property name="memory.size.for.data.logs.mb.per.archive" value="300"/>
+            <!-- page system size, '0m' means self-adaption -->
+            <property name="page.system.memory.cache.size" value="2G"/>
+            <!-- snapshot rollback speed, do not exceed the number of CPU cores -->
+            <property name="thread.pool.size.of.rollback" value="12"/>
+            <!--true for 0.5k sectors, false for 4k sectors-->
+            <property name="page.metadata.need.flush.to.disk" value="false"/>
+            <property name="delay.record.storage.exception.ms" value="2000"/>
+            <!-- page and network checksum -->
+            <property name="page.checksum.algorithm" value="DUMMY" range="DUMMY;ALDER32;DIGEST;CRC32;CRC32C"/>
+            <property name="network.checksum.algorithm" value="DUMMY" range="DUMMY;ALDER32;DIGEST;CRC32;CRC32C"/>
+            <!-- archive.init.mode append or overwrite /-->
+            <property name="archive.init.mode" value="overwrite" range="append;overwrite"/>
+            <property name="max.io.pending.requests" value="5000"/>
+            <property name="max.io.depth.per.hdd.storage" value="64"/>
+        </file>
+        <file name="jvm.properties">
+            <property name="initial.mem.pool.size" value="40g"/>
+            <property name="max.mem.pool.size" value="40g"/>
+            <property name="parallel.gc.threads" value="15"/>
+            <property name="conc.gc.threads" value="4"/>
+        </file>
+    </project>
+    <project name="pengyun-deployment_daemon">
+        <file name="deployment_daemon.properties">
+            <property name="max.network.frame.size" value="80000000" />
+            <property name="jps.command.path" value="/opt/storage/getProcessPM.sh" />
+        </file>
+        <file name="jvm.properties">
+            <property name="initial.mem.pool.size" value="256m" />
+            <property name="max.mem.pool.size" value="256m" />
+        </file>
+        <file name="log4j.properties">
+            <property name="log4j.rootLogger" value="DEBUG, FILE" />
+            <property name="log4j.appender.FILE.MaxFileSize" value="100MB"/>
+            <property name="log4j.appender.FILE.MaxBackupIndex" value="3"/>
+        </file>
+    </project>
+
+    <project name="pengyun-infocenter">
+        <file name="infocenter.properties">
+            <property name="app.location" value="r=PY;d=PY;c=PY;h=PY" />
+            <property name="is.arbiter.group.set" value="false" />
+            <property name="arbiter.group.id" value="0" />
+            <property name="page.wrapp.count" value="128" />
+            <property name="segment.wrapp.count" value="8" />
+            <property name="group.count" value="4" />
+            <property name="jdbc.driver.class" value="org.postgresql.Driver"/>
+            <property name="jdbc.url" value="jdbc:postgresql://10.0.2.255:5432/controlandinfodb" />
+            <property name="hibernate.dialect" value="py.db.sqlite.dialect.PostgresCustomDialect"/>
+            <property name="package.hbm" value="hibernate-config"/>
+            <property name="zookeeper.connection.string" value="10.0.2.247:2181,10.0.2.248:2181,10.0.2.249:2181" />
+            <property name="zookeeper.election.switch" value="true" range="true;false" />
+            <property name="max.rebalance.task.count.volume.datanode" value="50" />
+        </file>
+        <file name="jvm.properties">
+            <property name="initial.mem.pool.size" value="1024m" />
+            <property name="max.mem.pool.size" value="2048m" />
+        </file>
+        <file name="jmxagent.properties">
+            <property name="jmx.agent.port" value="8120" />
+            <property name="jmx.agent.switcher" value="on" range="on;off" />
+        </file>
+    </project>
+
+    <project name="pengyun-instancehub">
+        <file name="instancehub.properties">
+            <property name="app.location" value="r=PY;d=PY;c=PY;h=PY" />
+            <property name="center.dih.endpoint" value="10.0.2.223:10000" />
+        </file>
+        <file name="jmxagent.properties">
+            <property name="jmx.agent.port" value="10100" />
+            <property name="jmx.agent.switcher" value="on" range="on;off" />
+        </file>
+    </project>
+</configurations>

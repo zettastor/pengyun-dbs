@@ -1,0 +1,7 @@
+*
+!pom.xml
+!.gitignore
+!bin
+!resources
+!/bin/*
+!/resources/**/*

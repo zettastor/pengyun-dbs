@@ -1,0 +1,116 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>root</artifactId>
+    <groupId>com.pengyun</groupId>
+    <version>1.0.0-OS-SNAPSHOT</version>
+  </parent>
+
+  <groupId>com.pengyun.dbs</groupId>
+  <artifactId>dbs-root</artifactId>
+  <version>${revision}</version>
+  <packaging>pom</packaging>
+
+  <properties>
+    <revision>1.0.0-OS-SNAPSHOT</revision>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>flatten-maven-plugin</artifactId>
+        <version>1.1.0</version>
+        <configuration>
+          <updatePomFile>true</updatePomFile>
+          <!--flattenMode>resolveCiFriendliesOnly</flattenMode-->
+        </configuration>
+        <executions>
+          <execution>
+            <id>flatten</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>flatten</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>flatten.clean</id>
+            <phase>clean</phase>
+            <goals>
+              <goal>clean</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+  <modules>
+    <!-- modules should be in the following order to satisfy dependencies -->
+    <module>dbs-dnmodel</module>
+    <module>dbs-models_related</module>
+    <module>pengyun-driver_core</module>
+    <module>pengyun-coordinator</module>
+    <module>pengyun-infocenter</module>
+    <module>pengyun-drivercontainer</module>
+    <module>pengyun-deployment_daemon</module>
+    <module>pengyun-datanode_core</module>
+    <module>pengyun-datanode_service</module>
+    <module>pengyun-datanode</module>
+    <module>pengyun-webservice_adapter</module>
+    <module>pengyun-utils</module>
+    <module>pengyun-console</module>
+  </modules>
+
+  <dependencies>
+    <!--define unified dependencies:pengyun-core/pengyun-models in dbs-root-->
+    <dependency>
+      <groupId>${lib.groupId}</groupId>
+      <artifactId>pengyun-core</artifactId>
+      <version>1.0.0-OS-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>${lib.groupId}</groupId>
+      <artifactId>pengyun-core</artifactId>
+      <version>1.0.0-OS-SNAPSHOT</version>
+      <classifier>tests</classifier>
+    </dependency>
+    <dependency>
+      <groupId>${lib.groupId}</groupId>
+      <artifactId>pengyun-models</artifactId>
+      <version>1.0.0-OS-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
+
+  <!--define unified dependencies other than pengyun-core/pengyun-models in dependencyManagement-->
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>${lib.groupId}</groupId>
+        <artifactId>pengyun-database_core</artifactId>
+        <version>1.0.0-OS-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>${lib.groupId}</groupId>
+        <artifactId>pengyun-query_log</artifactId>
+        <version>1.0.0-OS-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>${lib.groupId}</groupId>
+        <artifactId>pengyun-dih_client</artifactId>
+        <version>1.0.0-OS-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>${lib.groupId}</groupId>
+        <artifactId>pengyun-dih_model</artifactId>
+        <version>1.0.0-OS-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>${lib.groupId}</groupId>
+        <artifactId>pengyun-monitor_common</artifactId>
+        <version>1.0.0-OS-SNAPSHOT</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+</project>
