@@ -75,6 +75,9 @@
     </project>
 
     <project name="pengyun-datanode">
+        <file name="archive.properties">
+            <property name="on.vms" value="false"/>
+        </file>
         <file name="arbiter_info.properties">
             <property name="app.location" value="r=PY;d=PY;c=PY;h=PY" />
         </file>
@@ -160,6 +163,10 @@
         <file name="jmxagent.properties">
             <property name="jmx.agent.port" value="10100" />
             <property name="jmx.agent.switcher" value="on" range="on;off" />
+        </file>
+        <file name="jvm.properties">
+            <property name="initial.mem.pool.size" value="512m" />
+            <property name="max.mem.pool.size" value="1024m" />
         </file>
     </project>
 </configurations>
