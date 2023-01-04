@@ -286,7 +286,7 @@ my $timestamp_package = strftime("%Y-%m-%d_%H-%M-%S", localtime);
 my $deploy_package_name = "$company_name-deploy-$package_version_only_number-OS-[$timestamp_package].tar.gz";
 print "package name: $deploy_package_name\n";
 
-$running_command = "cd $target_directory; tar zcf $deploy_package_name $company_name-deploy ";
+$running_command = "cd $target_directory; tar --owner 0 --group 0 -czf $deploy_package_name $company_name-deploy ";
 (system($running_command) == 0) or die "ERROR: cannot create package file $deploy_package_name \n";
 $tmp_file = File::Spec->catfile($target_directory, $deploy_package_name);
 if (-f $tmp_file) {
