@@ -215,11 +215,14 @@ $tmp_file = File::Spec->catfile($tmp_source_directory, $dih_expected_file_name);
 unless ( -f $tmp_file) {
     print "there is no expected file[$dih_expected_file_name] under directory[$tmp_source_directory]\n";
     print "The download may take several minutes, depending on your network speed...\n";
-    my $url_location = "https://github.com/zettastor/dbs/releases/download/$package_version_only_number/pengyun-instancehub-$package_version_only_number-OS-release.tar.gz";
-    print "You may down file[$url_location] manually, and put it under directory $tmp_source_directory\n";
+    my $url_location = "https://github.zdbs.dev/https://github.com/zettastor/dbs/releases/download/$package_version_only_number/pengyun-instancehub-$package_version_only_number-OS-release.tar.gz";
+    print "You may download pengyun-instancehub-$package_version_only_number-OS-release.tar.gz manually, and put it under directory $tmp_source_directory\n";
     $running_command = "cd $tmp_source_directory; wget $url_location; cd -";
     system($running_command);
 }
+# validate pengyun-instancehub tar.gz
+$running_command = "tar -tzf $tmp_source_directory/pengyun-instancehub-$package_version_only_number-OS-release.tar.gz > /dev/null";
+(system($running_command) == 0) or die "ERROR: $tmp_source_directory/pengyun-instancehub-$package_version_only_number-OS-release.tar.gz is invalid, please delete and redownload the package.\n";
 
 opendir(DIR, $tmp_source_directory) || die "ERROR: cannot open directory [$tmp_source_directory] \n";
 my @tmp_array = readdir(DIR);
@@ -282,8 +285,8 @@ foreach ( @file_list_resources ) {
 $step_index++;
 print "step[create package] $step_index : All files are ready. Create deploy package now......\n";
 
-my $timestamp_package = strftime("%Y-%m-%d_%H-%M-%S", localtime);
-my $deploy_package_name = "$company_name-deploy-$package_version_only_number-OS-[$timestamp_package].tar.gz";
+my $timestamp_package = strftime("%Y%m%d", localtime);
+my $deploy_package_name = "$company_name-deploy-$package_version_only_number-OS-$timestamp_package.tar.gz";
 print "package name: $deploy_package_name\n";
 
 $running_command = "cd $target_directory; tar --owner 0 --group 0 -czf $deploy_package_name $company_name-deploy ";
