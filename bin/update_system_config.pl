@@ -1,4 +1,17 @@
 #!/usr/bin/perl
+# Copyright (C) 2013-2024 Nanjing Pengyun Network Technology Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# 
 #
 # 20220819 - haiqinma - refactor for open source
 # 
@@ -97,6 +110,8 @@ unless ( -d $directory_so_files ) {
 
 $step_index++;
 &show_step_information("update special so and jar file for platform",$step_index);
+my $running_command = undef;
+my $tmp_file = undef;
 my $directory_packages   = File::Spec->catfile($directory_deploy, "packages");
 unless ( $remote_platform eq "x86_64") {
      # body...
@@ -169,7 +184,6 @@ if ( $service_name ne "all") {
     }
 }
 
-my $running_command = undef;
 if ( $service_name eq "all" ) {
     foreach (@array_service_name) {
         &update_config_properties_of_service($_);
@@ -179,16 +193,12 @@ if ( $service_name eq "all" ) {
 }
 
 
-
 $step_index++;
 &show_step_information("This is the end of update local packages according to configuration",$step_index);
 say LOG_FILE "================================================================================";
 print "================================================================================\n";
 close LOG_FILE;
-
 exit 0;
-
-&generate_local_packages_directory($service_name);
 
 
 $step_index++;
@@ -211,8 +221,8 @@ foreach ( readdir(DIR_PACKAGES) ) {
             next;
         }
     }
-    my $file_tmp = File::Spec->catfile($directory_packages, $_);
-    unlink $file_tmp || print "can't delete file $$file_tmp";
+    $tmp_file = File::Spec->catfile($directory_packages, $_);
+    unlink $tmp_file || print "can't delete file $$tmp_file";
     say LOG_FILE "delete $_ under packages directory";
 
 }
@@ -304,7 +314,6 @@ sub update_config_properties_under_directory {
         close($file_handler_properties_write);
     }
 }
-
 
 
 sub untar_package_file {
@@ -423,12 +432,13 @@ sub check_update_platform_type {
 
     my $os_info = &Public_storage::get_host_os_info($login_user, $login_passwd, $center_dih_host);
     if ($os_info =~ "fail") {
-        say LOG_FILE "get host [center_dih_host] OS information with message : $os_info";
+        say LOG_FILE "get host [$center_dih_host] OS information with message : $os_info";
     } else {
         say LOG_FILE "OS information on host[ $center_dih_host ] is:$os_info";
     }
-    my $type_platfrom = "x86_64";
-    if ( $os_info =~ "CentOS" ) {
+    my $type_platfrom = undef;
+    # all x86_64 platform only list OS version, not kernel information
+    unless ( $os_info =~ "kernel" ) {
         $type_platfrom = "x86_64";
     } else {
         $type_platfrom = $os_info;
@@ -438,6 +448,7 @@ sub check_update_platform_type {
         say LOG_FILE "Don't need to update remote.platform [$remote_platform] in file $file_deploy_properties";
     } else {
         say LOG_FILE "update remote.platform from $remote_platform to $type_platfrom in file $file_deploy_properties";
+        print "update remote.platform from $remote_platform to $type_platfrom in file $file_deploy_properties\n";
         $remote_platform = $type_platfrom;
         system ("sed -i 's#^remote.platform=.*#remote.platform=$type_platfrom#' $file_deploy_properties ");
     }
@@ -452,14 +463,16 @@ sub update_platform_so_jar_files {
     return "success";
 }
 
+
 sub usage_update_local_packages {
     $string_usage = "\nUsage:\n";
     $string_usage = $string_usage."\t--service|-s (service name like: console, datanode, instancehub and so on)\n";
     $string_usage = $string_usage."example:\n";
-    $string_usage = $string_usage."\tbin/update_system_config.pl (all local packages will be updated)\n";
-    $string_usage = $string_usage."\tbin/update_system_config.pl -s console (only console package will be updated)\n\n";
+    $string_usage = $string_usage."\tperl bin/update_system_config.pl (all local packages will be updated)\n";
+    $string_usage = $string_usage."\tperl bin/update_system_config.pl -s console (only console package will be updated)\n\n";
     return $string_usage;
 }
+
 
 sub show_step_information {
     (my $message, my $tmp_index) = @_;

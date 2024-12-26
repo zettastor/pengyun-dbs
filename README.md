@@ -1,1 +1,1 @@
-A placeholder for all DBS modules along with their dependent parent POM file.
+This is the placeholder for all dbs modules and their parents pom

@@ -1,11 +1,23 @@
 #!/usr/bin/perl
+# Copyright (C) 2013-2024 Nanjing Pengyun Network Technology Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# 
 package Public_storage;
 use strict;
 use warnings;
 use File::Spec;
 use FindBin qw($Bin);
 use POSIX qw(strftime);
-
 
 
 # this function is used to get software list from ini file
@@ -45,7 +57,7 @@ sub get_software_required_list {
 # 2018-06-26
 sub get_ip_array_from_string () {
     (my $hostListStr) = @_;
-    my @hosts;
+    my @hosts=();
     my @ip_split_by_comma = split(',',$hostListStr);
     foreach my $string_split_by_comma(@ip_split_by_comma) {
         if ( $string_split_by_comma =~ /:/ ) {
@@ -84,7 +96,6 @@ sub remove_repeate_ip_from_string () {
     my $hostListStr_uniq = join ",",@array_host_ip;
     return $hostListStr_uniq;
 }
-
 
 
 #this function is used to get an array of ip address from a string
@@ -205,7 +216,7 @@ sub operation_ssh {
 
 #this function is used to remove one ip from strings
 #input  : remove ip and ip string
-#output : ip string which have remove special ip
+#output : ip string which removed specify ip
 #
 sub remove_special_ip_from_string {
     (my $remove_ip, my $hostListStr) = @_;
@@ -224,6 +235,25 @@ sub remove_special_ip_from_string {
     } else {
         return $hostListStr;
     }
+}
+
+
+#this function is used to add host ip to strings
+#input  : add ip and ip string
+#output : ip string which contain specify ip
+#
+sub add_ip_list_to_string {
+    (my $add_ip_string, my $hostListStr) = @_;
+    my @array_host_all = &get_ip_array_from_string($hostListStr);
+    my @array_host_add = &get_ip_array_from_string($add_ip_string);
+    foreach my $one_ip ( @array_host_add ) {
+        unless ( grep {$_ eq $one_ip} @array_host_all) {
+            push @array_host_all, $one_ip;
+        }
+    }
+
+    my $hostListStr_new = join ",",@array_host_all;
+    return $hostListStr_new;
 }
 
 
@@ -282,7 +312,7 @@ sub check_remote_path_exists {
 
     (my $remote_message, my $err_info) = $ssh->capture2({ timeout => 30 }, "stat $remote_path  2>&1");
     if ($remote_message =~ "No such file or directory") {
-        return "fail: No such file or directory"
+        return "fail: No such file or directory";
     }
 
     my @array_tmp = split /\n/, $remote_message;
@@ -362,7 +392,6 @@ sub delete_remote_directory {
 }
 
 
-
 # this function used to get files or sub directories on specify path
 # input: specify path
 # output: array(file or dirctory)
@@ -378,7 +407,6 @@ sub get_local_path_content {
     closedir DIR_SPECIFY;
     return @path_content_list;
 }
-
 
 
 # this function used to check hostname has configured in /etc/hosts file or not
@@ -429,7 +457,8 @@ sub add_hostname_configured_in_hosts_file {
     chomp($remote_message);
     if ($remote_message eq "") {
         $ssh->system("echo $add_hostip $add_hostname >> /etc/hosts");
-        return "success";
+        sleep(1);
+        ($remote_message, $err_info) = $ssh->capture2({ timeout => 30 }, "grep $add_hostname /etc/hosts 2>&1 ");
     }
 
     my $flag_hostname = "false";
@@ -444,12 +473,10 @@ sub add_hostname_configured_in_hosts_file {
     }
     unless ( $flag_hostname eq "true" ) {
         # body...
-        $ssh->system("echo $add_hostip $add_hostname >> /etc/hosts");
+        return "fail: can't find $add_hostname in /etc/hosts";
     }
-
     return "success";
 }
-
 
 
 # this function used to get specify service's status by command systemctl status ***
@@ -479,9 +506,6 @@ sub get_service_status_by_systemctl {
 }
 
 
-
-
-
 # this function used to get remote host OS type and version  ***
 # input: login information and host ip
 # return value:
@@ -489,6 +513,7 @@ sub get_service_status_by_systemctl {
 #         CentOS7_1611 - version is CentOS7.3.1611
 #         CentOS7_1908 - version is CentOS7.7.1908
 #         CentOS8_1905 - version is CentOS8.0.1905
+#         openEuler22_03 - version is openEuler-22.03-LTS-x86_64
 #         openSUSE_150 - version is openSUSE Leap 15.0
 #         RedHat8_0    - version is Red Hat Enterprise Linux 8
 #
@@ -496,6 +521,7 @@ sub get_service_status_by_systemctl {
 #         Kylin_4.0.2_kernel4.15.0_aarch64 - TaiShan Kunpeng
 #         Kylin_4.0.2_kernel4.4.58_aarch64 - PHYTIUM
 #         NeoKylin_7.0_kernel4.14.0_aarch64 - TaiShan Kunpeng
+#         openEuler22_03_kernel5.10.0_aarch64 - Kunpeng
 sub get_host_os_info {
     (my $login_user, my $login_passwd, my $host_ip) = @_;
 
@@ -521,23 +547,18 @@ sub get_host_os_info {
         ($tmp_value, $err_info) = $ssh->capture2({ timeout => 30 }, "cat /etc/os-release | grep 'VERSION_ID' 2>&1 ");
         $ssh->error and return "fail: remote command get os information on Kylin or NeoKylin [$host_ip] failed.";
         chomp($tmp_value);
-        if ( $os_type =~ "NeoKylin" ) {
-            $tmp_value =~ /VERSION_ID=\"V(.*)\"/g;
-            $os_info = "NeoKylin_".$1;
-        } else {
-            $tmp_value =~ /VERSION_ID=\"(.*)\"/g;
-            $os_info = "Kylin_".$1;
-        }
-    } elsif ( $os_type =~ "Loongson" ) {
-        ($tmp_value, $err_info) = $ssh->capture2({ timeout => 30 }, "cat /etc/os-release | grep 'VERSION_ID' 2>&1 ");
-        $ssh->error and return "fail: remote command get os information on Loongson[$host_ip] failed.";
-        chomp($tmp_value);
-        $tmp_value =~ /VERSION_ID=(.*)/g;
-        $os_info="$1";
-        my $os_release = (split /\./, $os_info)[0];
-        my $os_version = (split /\./, $os_info)[1];
-        $os_info = "Loongson".$os_release."_".$os_version;
-    } elsif ( $os_type =~ "openSUSE" ) {
+        $tmp_value =~ /VERSION_ID=\"(.*)\"/g;
+        $os_info = "Kylin_".$1;
+    # } elsif ( $os_type =~ "Loongson" ) {
+    #     ($tmp_value, $err_info) = $ssh->capture2({ timeout => 30 }, "cat /etc/os-release | grep 'VERSION_ID' 2>&1 ");
+    #     $ssh->error and return "fail: remote command get os information on Loongson[$host_ip] failed.";
+    #     chomp($tmp_value);
+    #     $tmp_value =~ /VERSION_ID=(.*)/g;
+    #     $os_info="$1";
+    #     my $os_release = (split /\./, $os_info)[0];
+    #     my $os_version = (split /\./, $os_info)[1];
+    #     $os_info = "Loongson".$os_release."_".$os_version;
+    } elsif ( $os_type =~ "openEuler" ) {
         ($tmp_value, $err_info) = $ssh->capture2({ timeout => 30 }, "cat /etc/os-release | grep 'VERSION_ID' 2>&1 ");
         $ssh->error and return "fail: remote command get os information on openSUSE[$host_ip] failed.";
         chomp($tmp_value);
@@ -545,10 +566,16 @@ sub get_host_os_info {
         $os_info="$1";
         my $os_release = (split /\./, $os_info)[0];
         my $os_version = (split /\./, $os_info)[1];
-        $os_info = "openSUSE".$os_release."_".$os_version;
-        # $os_info =~ s/\.//g;
-        # my $os_version = $os_info;
-        # $os_info = "openSUSE"."_".$os_version;
+        $os_info = "openEuler".$os_release."_".$os_version;
+    # } elsif ( $os_type =~ "openSUSE" ) {
+    #     ($tmp_value, $err_info) = $ssh->capture2({ timeout => 30 }, "cat /etc/os-release | grep 'VERSION_ID' 2>&1 ");
+    #     $ssh->error and return "fail: remote command get os information on openSUSE[$host_ip] failed.";
+    #     chomp($tmp_value);
+    #     $tmp_value =~ /VERSION_ID=\"(.*)\"/g;
+    #     $os_info="$1";
+    #     my $os_release = (split /\./, $os_info)[0];
+    #     my $os_version = (split /\./, $os_info)[1];
+    #     $os_info = "openSUSE".$os_release."_".$os_version;
     } elsif ( $os_type =~ "Red Hat" ) {
         ($tmp_value, $err_info) = $ssh->capture2({ timeout => 30 }, "cat /etc/os-release | grep 'VERSION_ID' 2>&1 ");
         $ssh->error and return "fail: remote command get os information on openSUSE[$host_ip] failed.";
@@ -558,19 +585,11 @@ sub get_host_os_info {
         my $os_release = (split /\./, $os_info)[0];
         my $os_version = (split /\./, $os_info)[1];
         $os_info = "RedHat".$os_release."_".$os_version;
-    } elsif ( $os_type =~ "Ubuntu" ) {
-        $tmp_value = (split / /, $os_type)[1];
-        (my $os_release = $tmp_value) =~ s/\./_/g;
-        $os_info = "Ubuntu".$os_release;
-    } elsif ( $os_type =~ "uos" ) {
-        ($tmp_value, $err_info) = $ssh->capture2({ timeout => 30 }, "cat /etc/os-release | grep 'VERSION_ID' 2>&1 ");
-        $ssh->error and return "fail: remote command get os information on UOS[$host_ip] failed.";
-        chomp($tmp_value);
-        $tmp_value =~ /VERSION_ID=\"(.*)\"/g;
-        my $os_release="$1";
-        $os_release =~ s/\s//g;
-        $os_info = "UOS".$os_release;
-    } elsif ( $os_type =~ "UnionTech" ) {
+    # } elsif ( $os_type =~ "Ubuntu" ) {
+    #     $tmp_value = (split / /, $os_type)[1];
+    #     (my $os_release = $tmp_value) =~ s/\./_/g;
+    #     $os_info = "Ubuntu".$os_release;
+    } elsif ( ($os_type =~ "uos") || ($os_type =~ "UnionTech") ) {
         ($tmp_value, $err_info) = $ssh->capture2({ timeout => 30 }, "cat /etc/os-release | grep 'VERSION_ID' 2>&1 ");
         $ssh->error and return "fail: remote command get os information on UOS[$host_ip] failed.";
         chomp($tmp_value);
@@ -604,7 +623,6 @@ sub get_host_os_info {
 }
 
 
-
 # this function used to get current host OS type and version  ***
 # input: null
 # return value: these return value should be same with function get_host_os_info
@@ -629,34 +647,21 @@ sub get_current_host_os_info {
     } elsif ( $os_type =~ "Kylin" ) {
         $tmp_value = `cat /etc/os-release | grep 'VERSION_ID' 2>&1 `;
         chomp($tmp_value);
-        if ( $os_type =~ "NeoKylin" ) {
-            $tmp_value =~ /VERSION_ID=\"V(.*)\"/g;
-            $os_info = "NeoKylin_".$1;
-        } else {
+        # if ( $os_type =~ "NeoKylin" ) {
+        #     $tmp_value =~ /VERSION_ID=\"V(.*)\"/g;
+        #     $os_info = "NeoKylin_".$1;
+        # } else {
             $tmp_value =~ /VERSION_ID=\"(.*)\"/g;
             $os_info = "Kylin_".$1;
-        }
-    } elsif ( $os_type =~ "Loongson" ) {
-        $tmp_value = `cat /etc/os-release | grep 'VERSION_ID' 2>&1 `;
-        chomp($tmp_value);
-        $tmp_value =~ /VERSION_ID=(.*)/g;
-        $os_info="$1";
-        $os_release = (split /\./, $os_info)[0];
-        $os_version = (split /\./, $os_info)[1];
-        $os_info = "Loongson".$os_release."_".$os_version;
-    } elsif ( $os_type =~ "NeoKylin" ) {
-        $tmp_value = `cat /etc/os-release | grep 'VERSION_ID' 2>&1 `;
-        chomp($tmp_value);
-        $tmp_value =~ /VERSION_ID=\"V(.*)\"/g;
-        $os_info = "NeoKylin_".$1;
-    } elsif ( $os_type =~ "openSUSE" ) {
+        # }
+    } elsif ( $os_type =~ "openEuler" ) {
         $tmp_value = `cat /etc/os-release | grep 'VERSION_ID' 2>&1 `;
         chomp($tmp_value);
         $tmp_value =~ /VERSION_ID=\"(.*)\"/g;
         $os_info="$1";
         $os_release = (split /\./, $os_info)[0];
         $os_version = (split /\./, $os_info)[1];
-        $os_info = "openSUSE".$os_release."_".$os_version;
+        $os_info = "openEuler".$os_release."_".$os_version;
     } elsif ( $os_type =~ "Red Hat" ) {
         $tmp_value = `cat /etc/os-release | grep 'VERSION_ID' 2>&1 `;
         chomp($tmp_value);
@@ -665,10 +670,6 @@ sub get_current_host_os_info {
         $os_release = (split /\./, $os_info)[0];
         $os_version = (split /\./, $os_info)[1];
         $os_info = "RedHat".$os_release."_".$os_version;
-    } elsif ( $os_type =~ "Ubuntu" ) {
-        $tmp_value = (split / /, $os_type)[1];
-        (my $os_release = $tmp_value) =~ s/\./_/g;
-        $os_info = "Ubuntu".$os_release;
     } elsif ( $os_type =~ "uos" ) {
         $tmp_value = `cat /etc/os-release | grep 'VERSION_ID' 2>&1 `;
         chomp($tmp_value);
@@ -694,10 +695,8 @@ sub get_current_host_os_info {
         $os_info = $os_info."_kernel"."$kernel_version"."_"."$cpu_architecture";
         print "whole platform information on current host is: [$os_info]\n";
     }
-
     return "$os_info";
 }
-
 
 
 # this function used to get OS software management way dpkg or rpm  ***
@@ -710,22 +709,16 @@ sub get_current_host_os_info {
 sub get_os_software_management_way {
     (my $os_info) = @_;
     $os_info = lc $os_info;
-    if (($os_info =~ "centos") || ($os_info =~ "red hat") || ($os_info =~ "redhat") ) {
-        return "rpm";
-    } elsif ( $os_info =~ "loongson" ) {
+    if (($os_info =~ "centos") || ($os_info =~ "openeuler") ) {
         return "rpm";
     } elsif ( $os_info =~ "kylin" ) {
-        if ( ($os_info eq "kylin_v10_kernel4.19.90_aarch64" ) || ( $os_info eq "neokylin_7.0_kernel4.14.0_aarch64") ) {
-            return "rpm";
-        } else {
-            return "dpkg";
-        }
-    } elsif (($os_info =~ "ubuntu") || ($os_info =~ "uos") ) {
+        return "rpm";
+    } elsif ( $os_info =~ "uos") {
         return "dpkg";
     }
-
     return "unknown";
 }
+
 
 # this function used to get OS sync timestamp way :
 # local_chrony - need to configure chrony among cluster
@@ -745,7 +738,6 @@ sub get_os_sync_timestamp_way {
     }
     return "configured_mode";
 }
-
 
 
 # this function used to remove space and last character in one string
@@ -801,7 +793,6 @@ sub get_chronyserver_list_from_cluster {
             print "chrony server ip[$server_ip], count[$chronyserver_ip_to_times{$server_ip}]\n";
         }
     }
-
 
     my @chronyserver_list = ();
     my $max_count = (reverse sort values %chronyserver_ip_to_times)[0];
@@ -875,7 +866,6 @@ sub get_ntpserver_list_from_cluster {
         }
     }
 
-
     my @ntpserver_list = ();
     my $max_count = (reverse sort values %ntpserver_ip_to_times)[0];
     # print "---debug: max count is [$max_count]\n";
@@ -910,7 +900,6 @@ sub get_ntpserver_list_from_cluster {
 
     return @ntpserver_ok_list;
 }
-
 
 
 # this function used to set local repository on openSUSE host

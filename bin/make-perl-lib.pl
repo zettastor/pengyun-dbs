@@ -1,4 +1,17 @@
 #!/usr/bin/perl
+# Copyright (C) 2013-2024 Nanjing Pengyun Network Technology Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# 
 # this script is used to prepare perl lib environment on current host
 # 20200202 - mahaiqing - reconstruction.
 # 20200321 - mahaiqing - add local perl lib checking.
@@ -79,6 +92,7 @@ $step_index++;
 &show_step_information("get required perl library information", $step_index);
 my $directory_library_resource = File::Spec->catfile($directory_deploy, "lib_src");
 my $directory_library_local_perl5 = File::Spec->catfile($directory_deploy, "lib", "perl5");
+system("mkdir -p $directory_library_local_perl5");
 
 my @library_list = qw(Class-Accessor Config-Properties IO-Tty Expect JSON Log-Log4perl Net-OpenSSH Net-SSH-Expect);
 my $library_module_name = undef;
@@ -136,7 +150,7 @@ sub check_perl_library_by_name {
     }
     my $running_command = "perldoc -l $module_name 2>&1";
     chomp($tmp_result=`cd $directory_deploy; $running_command `);
-    say LOG_FILE "check results in public directory as: $tmp_result";
+    say LOG_FILE "check results in public directory by command [$running_command] as: $tmp_result";
     if ($tmp_result eq "" or $tmp_result =~ "No documentation found") {
         say LOG_FILE "can't find perl library module [$module_name] in public directory!!";
     } else {
@@ -193,31 +207,39 @@ sub check_perl_library_by_check_pm_file {
         $module_filename = $module_name.".pm";
     }
 
-    say LOG_FILE "check [$module_name] pm file under [$directory_library_local_perl5] or not";
-    my $target_file = undef;
-    if ( defined $module_dirname ) {
-        if ( $module_name eq "Net::SSH::Expect" ) {
-            $target_file = File::Spec->catfile($directory_library_local_perl5, "Net/SSH/Expect.pm");
-        } else {
-            $target_file = File::Spec->catfile($directory_library_local_perl5, $module_dirname, $module_filename);
-        }
-    } else {
-        $target_file = File::Spec->catfile($directory_library_local_perl5, $module_filename);
-    }
-    say LOG_FILE "check file [$target_file] exists or not";
-
-    if ( -f "$target_file" ) {
-        return "true";
-    } else {
-        say LOG_FILE "check file [$target_file] under x86_64-linux-gnu-thread-multi ";
-        $target_file = File::Spec->catfile($directory_library_local_perl5, "x86_64-linux-gnu-thread-multi",$module_dirname, $module_filename);
-    }
-
-    if ( -f "$target_file" ) {
-        return "true";
-    } else {
+    say LOG_FILE "check [$module_filename] file under [$directory_library_local_perl5] exists or not";
+    chomp($tmp_result = `find $directory_library_local_perl5 -name $module_filename`);
+    if ( $tmp_result eq "") {
         return "false";
+    } else {
+        say LOG_FILE "[$module_filename] file information: $tmp_result";
     }
+    my @tmp_array = split /\n/, $tmp_result;
+    foreach (@tmp_array) {
+        my $tmp_filename = (split /\//, $_)[-1];
+        unless ($tmp_filename eq $module_filename) {
+            next;
+        }
+        unless (defined $module_dirname) {
+            return "true";
+        }
+
+        my $tmp_last_1_dir = (split /\//, $_)[-2];
+        if ( $module_name eq "Net::SSH::Expect" ) {
+            my $tmp_last_2_dir = (split /\//, $_)[-3];
+            if ( ($tmp_last_1_dir eq "SSH") && ($tmp_last_2_dir eq "Net") ) {
+                say LOG_FILE "find $_ for perl module [Net::SSH::Expect]";
+                return "true";
+            }
+        } else {
+            if ($tmp_filename eq $module_filename) {
+                say LOG_FILE "find $_ for perl module [$module_name]";
+                return "true";
+            }
+        }
+    }
+
+    return "false";
 }
 
 
