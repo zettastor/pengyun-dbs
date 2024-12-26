@@ -1,4 +1,17 @@
 #!/usr/bin/perl
+# Copyright (C) 2013-2024 Nanjing Pengyun Network Technology Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# 
 # this script is used to make package
 
 # 20221229 - haiqinma - refactor for open source
@@ -68,7 +81,6 @@ print "step[create package] $step_index : package type: $package_type; package v
 
 my $running_command = undef;
 $step_index++;
-chomp(my $time_stamp=localtime());
 print "step[create package] $step_index : prepare package directory($target_directory)\n";
 my $directory_name_package_deploy = File::Spec->catfile($target_directory, "$company_name-deploy");
 if ( -e $directory_name_package_deploy ) {

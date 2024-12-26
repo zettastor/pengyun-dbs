@@ -10,8 +10,12 @@
 
   <groupId>com.pengyun.dbs</groupId>
   <artifactId>dbs-root</artifactId>
-  <version>1.0.0-OS-SNAPSHOT</version>
+  <version>${revision}</version>
   <packaging>pom</packaging>
+
+  <properties>
+    <revision>1.0.0-OS-SNAPSHOT</revision>
+  </properties>
 
   <build>
     <plugins>

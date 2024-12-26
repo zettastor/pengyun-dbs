@@ -1,4 +1,17 @@
 #!/usr/bin/perl
+# Copyright (C) 2013-2024 Nanjing Pengyun Network Technology Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# 
 #
 # 20191107 - mahaiqing - reconfiguration.
 #
@@ -78,6 +91,23 @@ sub environment_clean {
         }
     }
     closedir DIR;
+
+    my $file_rc_local = "/etc/rc.d/rc.local";
+    unless ( -f "$file_rc_local") {
+         # body...
+         say LOG_FILE "Thers is no file $file_rc_local exists on current host. check file /etc/rc.local";
+         if ( (-e "/etc/rc.local") && (! -l "/etc/rc.local") ) {
+            $file_rc_local = "/etc/rc.local";
+         } else {
+            $file_rc_local = "UNCLEAR"
+         }
+    }
+    say LOG_FILE "current host rc.local real location is : $file_rc_local";
+    unless ( $file_rc_local eq "UNCLEAR" ) {
+        system("sed -i '/storectl/d' $file_rc_local");
+    }
+    say LOG_FILE "remove storectl from rc.local file";
+
 }
 
 
@@ -97,7 +127,7 @@ sub environment_prepare {
     unless ( $file_rc_local eq "UNCLEAR") {
         # body...
         system("chmod a+x $file_rc_local");
-        my $tmp_results = `grep 'storectl.pl' $file_rc_local 2>&1 `;
+        my $tmp_results = `grep 'storectl' $file_rc_local 2>&1 `;
         chomp($tmp_results);
         unless ( $tmp_results eq "" ) {
             # body...
